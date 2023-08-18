@@ -1,12 +1,13 @@
-import { useRef, useState } from "react";
-import { NavLink } from "react-router-dom";
+import axios from "axios";
+import { useRef } from "react";
+import { NavLink, useHistory } from "react-router-dom";
 
 const Login = () => {
-  const [isLogin, setLogin] = useState(true);
   const emailRef = useRef("");
   const passwordRef = useRef("");
+  const history = useHistory();
 
-  const submitHandler = (e) => {
+  const submitHandler = async (e) => {
     e.preventDefault();
 
     const loginCredentials = {
@@ -14,7 +15,17 @@ const Login = () => {
       password: passwordRef.current.value,
     };
 
-    console.log(loginCredentials);
+    try {
+      const response = await axios.post(
+        "http://localhost:4000/user/login",
+        loginCredentials
+      );
+
+      alert(response.data.message);
+      history.push('/chat')
+    } catch (error) {
+      alert(error.response.data.message);
+    }
   };
 
   return (
