@@ -21,8 +21,9 @@ const Login = () => {
         loginCredentials
       );
 
+      localStorage.setItem("token", response.data.token);
       alert(response.data.message);
-      history.push('/chat')
+      history.push("/chat");
     } catch (error) {
       alert(error.response.data.message);
     }
