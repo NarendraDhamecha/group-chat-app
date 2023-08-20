@@ -6,14 +6,36 @@ const GroupChat = () => {
   const messageRef = useRef("");
 
   useEffect(() => {
-    axios("http://localhost:4000/chat/getmsgs", {
+    let lastMsgId = null;
+    const oldmsgs = JSON.parse(localStorage.getItem("msgs"));
+    if (oldmsgs && oldmsgs.length > 0) {
+      lastMsgId = oldmsgs[oldmsgs.length - 1].id;
+    }
+
+    axios(`http://localhost:4000/chat/getmsgs?lastMsgId=${lastMsgId}`, {
       headers: {
         Authorization: localStorage.getItem("token"),
       },
     })
-      .then((res) => setMessages(res.data))
+      .then((res) => {
+        let allMsgs = [];
+        if (oldmsgs && oldmsgs.length > 0) {
+          allMsgs = [...oldmsgs, ...res.data];
+        } else {
+          allMsgs = [...res.data];
+        }
+
+        if (allMsgs.length > 10) {
+          const latestAllMsgs = allMsgs.slice(allMsgs.length - 10);
+          localStorage.setItem("msgs", JSON.stringify(latestAllMsgs));
+          setMessages(latestAllMsgs);
+          return;
+        }
+        localStorage.setItem("msgs", JSON.stringify(allMsgs));
+        setMessages(allMsgs);
+      })
       .catch((err) => console.log(err));
-  },[]);
+  }, []);
 
   const sendMsgHandler = async (e) => {
     e.preventDefault();
@@ -43,7 +65,7 @@ const GroupChat = () => {
     <div>
       <h2>Chat App</h2>
       <div>
-        {messages.map((data) => {
+        {messages.slice(messages.length-10).map((data) => {
           return (
             <p key={Math.random()}>
               {data.name}: {data.message}
