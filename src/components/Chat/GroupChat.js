@@ -1,11 +1,15 @@
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
-import { NavLink } from "react-router-dom";
 import useGetMessages from "../Hooks/useGetMessages";
+import CreateGroup from "./CreateGroup";
+import AdminPower from "./AdminPower";
 
 const GroupChat = () => {
   const [messages, setMessages] = useState([]);
+  const [createGrp, setCreateGrp] = useState(false);
   const [isGroupOpen, setIsGroupOpen] = useState(false);
+  const [isAdminPower, setIsAdminPower] = useState(false);
+  const [title, setTitle] = useState();
   const messageRef = useRef("");
   const [groups, setGroups] = useState([]);
   const getMessages = useGetMessages();
@@ -69,6 +73,16 @@ const GroupChat = () => {
     setIsGroupOpen(grp);
   };
 
+  const onNewGroup = () => {
+    setCreateGrp(!createGrp);
+  };
+
+  const onAdminPower = (e, title, group) => {
+    e.stopPropagation();
+    setTitle({ title, group });
+    setIsAdminPower(!isAdminPower);
+  };
+
   return (
     <div>
       <h2>Chat App</h2>
@@ -88,15 +102,33 @@ const GroupChat = () => {
         </form>
       </div>
       <div>
-        {groups.map((grp) => {
-          return (
-            <p onClick={() => onGroupClick(grp)} key={grp.id}>
-              {grp.name}
-            </p>
-          );
-        })}
+        <ul>
+          {groups.map((grp) => {
+            return (
+              <li onClick={() => onGroupClick(grp)} key={grp.id}>
+                <span>{grp.name}</span>
+                {grp.userGroup.isAdmin === 1 && (
+                  <button
+                    onClick={(e) =>
+                      onAdminPower(e, "Add New Member", grp )
+                    }
+                  >
+                    Add new member
+                  </button>
+                )}
+                {grp.userGroup.isAdmin === 1 && (
+                  <button onClick={(e) => onAdminPower(e, "Make Admin", grp)}>
+                    Make admin
+                  </button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
       </div>
-      <NavLink to="/groups">See your groups</NavLink>
+      {isAdminPower && <AdminPower closeModal={onAdminPower} group={title} />}
+      {createGrp && <CreateGroup closeModal={onNewGroup} />}
+      <button onClick={onNewGroup}>Create new group</button>
     </div>
   );
 };
