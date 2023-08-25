@@ -1,8 +1,9 @@
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
-import useGetMessages from "../Hooks/useGetMessages";
 import CreateGroup from "./CreateGroup";
 import AdminPower from "./AdminPower";
+import { io } from "socket.io-client";
+const socket = io("http://localhost:5000");
 
 const GroupChat = () => {
   const [messages, setMessages] = useState([]);
@@ -12,14 +13,16 @@ const GroupChat = () => {
   const [title, setTitle] = useState();
   const messageRef = useRef("");
   const [groups, setGroups] = useState([]);
-  const getMessages = useGetMessages();
 
   useEffect(() => {
-    const grpId = isGroupOpen ? isGroupOpen.id : null;
-    getMessages(grpId)
-      .then((res) => setMessages(res))
-      .catch((err) => console.log(err));
-  }, [getMessages, isGroupOpen]);
+    (() => {
+      const grpId = isGroupOpen ? isGroupOpen.id : null;
+      socket.emit('getMessages', grpId);
+      socket.on('messages', (msg) => {
+        setMessages(msg)
+      })
+    })()
+  }, [isGroupOpen]);
 
   useEffect(() => {
     axios("http://localhost:4000/group/getgroup", {
@@ -87,7 +90,7 @@ const GroupChat = () => {
     <div>
       <h2>Chat App</h2>
       <div>
-        {messages.map((data) => {
+        {messages.length > 0 &&  messages.map((data) => {
           return (
             <p key={Math.random()}>
               {data.name}: {data.message}
@@ -103,7 +106,7 @@ const GroupChat = () => {
       </div>
       <div>
         <ul>
-          {groups.map((grp) => {
+          {groups.length > 0 && groups.map((grp) => {
             return (
               <li onClick={() => onGroupClick(grp)} key={grp.id}>
                 <span>{grp.name}</span>
